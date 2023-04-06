@@ -163,23 +163,22 @@ export async function requestChatStream(
         fatal: true,
         ignoreBOM: true,
       });
+      var content;
 
       options?.onController?.(controller);
 
-      while (true) {
+      while ((content = await reader?.read())) {
         // handle time out, will stop if no response in 10 secs
         const resTimeoutId = setTimeout(() => finish(), TIME_OUT_MS);
-        const content = await reader?.read();
         clearTimeout(resTimeoutId);
-        const text = decoder.decode(content?.value, { stream: !content?.done });
+        const text = decoder.decode(content.value, { stream: true });
         responseText += text;
 
         options?.onMessage(responseText, false);
-
-        if (content?.done) {
-          break;
-        }
       }
+
+      const text = decoder.decode();
+      responseText += text;
 
       finish();
     } else if (res.status === 401) {
